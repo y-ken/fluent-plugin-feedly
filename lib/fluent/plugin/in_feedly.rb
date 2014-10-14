@@ -61,18 +61,18 @@ module Fluent
       log.info "start crawling"
       @subscribe_categories.each do |category_name|
         category_id = "user/#{@profile_id}/category/#{category_name}"
-        continuation = get_continuation
+        continuation_id = get_continuation_id
         loop {
           cursor = @client.stream_entries_contents(category_id, {
             count: 3000, 
-            continuation: continuation
+            continuation: continuation_id,
           })
           cursor.items.each do |item|
             Engine.emit(@tag, Engine.now, item)
           end
-          continuation = cursor.continuation
-          set_continuation(continuation)
-          break if continuation.nil?
+          continuation_id = cursor.continuation
+          set_continuation_id(continuation_id)
+          break if continuation_id.nil?
         }
       end
     end
@@ -81,7 +81,7 @@ module Fluent
       Digest::SHA512.digest(@subscribe_categories.sort.join(''))
     end
 
-    def set_continuation(continuation_id)
+    def set_continuation_id(continuation_id)
       @state_store.set("continuation", {
         id: continuation_id,
         subscribe_categories_hash: subscribe_categories_hash
@@ -89,7 +89,7 @@ module Fluent
       @state_store.update!
     end
 
-    def get_continuation
+    def get_continuation_id
       record = @state_store.get('continuation')
       if subscribe_categories_hash == record[:subscribe_categories_hash]
         return record[:id]
