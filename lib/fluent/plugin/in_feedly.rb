@@ -5,10 +5,15 @@ module Fluent
     Plugin.register_input('feedly', self)
 
     config_param :access_token, :string
-    config_param :tag, :string
-    config_param :run_interval, :time, :default => '10m'
-    config_param :subscribe_categories, :array, :default => ['global.all']
     config_param :state_file, :string
+    config_param :tag, :string
+
+    config_param :subscribe_categories, :array, :default => ['global.all']
+    config_param :run_interval, :time, :default => 10*60 #10m
+    config_param :fetch_count, :integer, :default => 20
+    config_param :fetch_time_range, :time, :default => 60*60*24*3 #3d
+    config_param :fetch_time_range_on_startup, :time, :default => 60*60*24*14 #2w
+    config_param :enable_sandbox, :bool, :default => false
 
     unless method_defined?(:log)
       define_method(:log) { $log }
@@ -24,11 +29,14 @@ module Fluent
     def configure(conf)
       super
 
+      if not @fetch_count >= 20 && @fetch_count <= 10000
+        raise Fluent::ConfigError, "Feedly: fetch_count param (#{@fetch_count}) should be between 20 and 10000."
+      end
+
       @client = Feedlr::Client.new(
         oauth_access_token: @access_token,
-        #sandbox: false,
-        #logger: Logger.new(STDOUT) #debug use
-        )
+        sandbox: @enable_sandbox,
+      )
     end
 
     def start
@@ -42,6 +50,7 @@ module Fluent
     end
 
     def run
+      @initial_loop = true
       loop do
         begin
           fetch
@@ -56,17 +65,17 @@ module Fluent
     end
 
     def fetch
-      #未読記事を順次クロールしてemitする
-      #カテゴリ毎にポジション情報を保持する必要がある
-      log.info "start crawling"
       @subscribe_categories.each do |category_name|
         category_id = "user/#{@profile_id}/category/#{category_name}"
         continuation_id = get_continuation_id
         loop {
           cursor = @client.stream_entries_contents(category_id, {
-            count: 3000, 
+            count: @fetch_count,
             continuation: continuation_id,
+            newerThan: get_fetch_time_range
           })
+          log.debug "Feedly:", continuation_id: continuation_id
+          log.debug "Feedly: fetched #{cursor.items.size} articles"
           cursor.items.each do |item|
             Engine.emit(@tag, Engine.now, item)
           end
@@ -75,6 +84,16 @@ module Fluent
           break if continuation_id.nil?
         }
       end
+    end
+
+    def get_fetch_time_range
+      if @initial_loop
+        @initial_loop = false
+        range = @fetch_time_range_on_startup
+      else
+        range = @fetch_time_range
+      end
+      return (Time.now.to_i - range ) * 1000
     end
 
     def subscribe_categories_hash
