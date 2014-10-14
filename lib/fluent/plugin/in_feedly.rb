@@ -71,8 +71,8 @@ module Fluent
             Engine.emit(@tag, Engine.now, item)
           end
           continuation = cursor.continuation
-          break if continuation.nil?
           set_continuation(continuation)
+          break if continuation.nil?
         }
       end
     end
@@ -81,10 +81,10 @@ module Fluent
       Digest::SHA512.digest(@subscribe_categories.sort.join(''))
     end
 
-    def set_continuation(continuation)
+    def set_continuation(continuation_id)
       @state_store.set("continuation", {
-        subscribe_categories_hash: subscribe_categories_hash,
-        continuation: continuation
+        id: continuation_id,
+        subscribe_categories_hash: subscribe_categories_hash
       })
       @state_store.update!
     end
@@ -92,7 +92,7 @@ module Fluent
     def get_continuation
       record = @state_store.get('continuation')
       if subscribe_categories_hash == record[:subscribe_categories_hash]
-        return record[:continuation]
+        return record[:id]
       else
         return nil
       end
