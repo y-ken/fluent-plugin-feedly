@@ -9,7 +9,7 @@ module Fluent
     config_param :tag, :string
 
     config_param :subscribe_categories, :array, :default => ['global.all']
-    config_param :run_interval, :time, :default => 10*60 #10m
+    config_param :run_interval, :time, :default => 60*10 #10m
     config_param :fetch_count, :integer, :default => 20
     config_param :fetch_time_range, :time, :default => 60*60*24*3 #3d
     config_param :fetch_time_range_on_startup, :time, :default => 60*60*24*14 #2w
@@ -69,19 +69,14 @@ module Fluent
         category_id = "user/#{@profile_id}/category/#{category_name}"
         continuation_id = get_continuation_id
         loop {
-          cursor = @client.stream_entries_contents(category_id, {
-            count: @fetch_count,
-            continuation: continuation_id,
-            newerThan: get_fetch_time_range
-          })
-          log.debug "Feedly:", continuation_id: continuation_id
-          log.debug "Feedly: fetched #{cursor.items.size} articles"
+          request_option = { count: @fetch_count, continuation: continuation_id, newerThan: get_fetch_time_range }
+          cursor = @client.stream_entries_contents(category_id, request_option)
           cursor.items.each do |item|
             Engine.emit(@tag, Engine.now, item)
           end
-          continuation_id = cursor.continuation
-          set_continuation_id(continuation_id)
-          break if continuation_id.nil?
+          log.debug "Feedly: fetched articles.", articles: cursor.items.size, request_option: request_option
+          set_continuation_id(cursor.continuation)
+          break if get_continuation_id.nil?
         }
       end
     end
