@@ -55,7 +55,7 @@ module Fluent
         begin
           fetch
         rescue => e
-          log.error "Feedly: unexpected error has occoured.", :error => e.message, :error_class => e.class
+          log.error "Feedly: unexpected error has occoured.", error: e.message, error_class: e.class
           log.error_backtrace e.backtrace
           sleep @run_interval
           retry
@@ -71,6 +71,10 @@ module Fluent
         loop {
           request_option = { count: @fetch_count, continuation: get_continuation_id, newerThan: fetch_time_range }
           cursor = @client.stream_entries_contents(category_id, request_option)
+          if cursor.items.nil?
+            log.warn "Feedly: unexpected error has occoured.", cursor: cursor
+            break
+          end
           cursor.items.each do |item|
             Engine.emit(@tag, Engine.now, item)
           end
