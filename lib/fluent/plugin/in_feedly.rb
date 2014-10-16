@@ -67,8 +67,9 @@ module Fluent
     def fetch
       @subscribe_categories.each do |category_name|
         category_id = "user/#{@profile_id}/category/#{category_name}"
+        fetch_time_range = get_fetch_time_range
         loop {
-          request_option = { count: @fetch_count, continuation: get_continuation_id, newerThan: get_fetch_time_range }
+          request_option = { count: @fetch_count, continuation: get_continuation_id, newerThan: fetch_time_range }
           cursor = @client.stream_entries_contents(category_id, request_option)
           cursor.items.each do |item|
             Engine.emit(@tag, Engine.now, item)
