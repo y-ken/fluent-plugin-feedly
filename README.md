@@ -2,7 +2,7 @@
 
 ## Overview
 
-Fluentd input plugin to fetch RSS/ATOM feed via Feedly Could.
+Fluentd input plugin to fetch RSS/ATOM feed via feedly Cloud API.
 
 ## Dependencies
 
@@ -55,7 +55,7 @@ $ sudo /usr/lib64/fluent/ruby/bin/fluent-gem install fluent-plugin-feedly
   # Using sandbox account
   enable_sandbox   false           # Optional (default: false)
   
-  # Set log level for this plugin. To see debug level, set 'debug' for this value.
+  # Set log level for this plugin. To hide info level, set 'warn' for this value.
   # it can see at stdout as like `$ tail -f /var/log/td-agent/td-agent.log`
   log_level        info 　　　　　　 # Optional (default: info)
 </source>
@@ -88,7 +88,6 @@ $ cat /etc/td-agent/td-agent.conf
   run_interval     30m
   fetch_time_range 1h
   fetch_time_range_on_startup 3h
-  log_level        debug
 </source>
 
 <match input.feedly>
@@ -105,8 +104,8 @@ You can see the behavior about this plugin with this command.
 ```
 # to check stdout of this plugin
 $ tail -f /var/log/td-agent/td-agent.log
-2014-10-16 14:47:01 +0900 [debug]: Feedly: fetched articles. articles=416 request_option={:count=>1000, :continuation=>"148cfb7f516:9371a3c:726280cf", :newerThan=>1412228787000}
-2014-10-16 15:02:02 +0900 [debug]: Feedly: fetched articles. articles=492 request_option={:count=>1000, :continuation=>nil, :newerThan=>1413428521000}
+2014-10-16 14:47:01 +0900 [info]: Feedly: fetched articles. articles=416 request_option={:count=>1000, :continuation=>"148cfb7f516:9371a3c:726280cf", :newerThan=>1412228787000}
+2014-10-16 15:02:02 +0900 [info]: Feedly: fetched articles. articles=492 request_option={:count=>1000, :continuation=>nil, :newerThan=>1413428521000}
 ```
 
 ```

@@ -72,13 +72,13 @@ module Fluent
           request_option = { count: @fetch_count, continuation: get_continuation_id, newerThan: fetch_time_range }
           cursor = @client.stream_entries_contents(category_id, request_option)
           if cursor.items.nil?
-            log.warn "Feedly: unexpected error has occoured.", cursor: cursor
+            log.error "Feedly: unexpected error has occoured.", cursor: cursor
             break
           end
           cursor.items.each do |item|
             Engine.emit(@tag, Engine.now, item)
           end
-          log.debug "Feedly: fetched articles.", articles: cursor.items.size, request_option: request_option
+          log.info "Feedly: fetched articles.", articles: cursor.items.size, request_option: request_option
           set_continuation_id(cursor.continuation)
           break if get_continuation_id.nil?
         }
