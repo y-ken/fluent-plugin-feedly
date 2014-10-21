@@ -40,8 +40,6 @@ module Fluent
     end
 
     def start
-      @profile_id = @client.user_profile.id
-      @state_store = StateStore.new(@state_file)
       @thread = Thread.new(&method(:run))
     end
 
@@ -54,17 +52,24 @@ module Fluent
       loop do
         begin
           fetch
+        rescue Feedlr::Error::Unauthorized, Feedlr::Error::Forbidden => e
+          log.error "Feedly: unrecoverable error has occoured.", error: e.message, error_class: e.class
+          log.error_backtrace e.backtrace
+          break
         rescue => e
-          log.error "Feedly: unexpected error has occoured.", error: e.message, error_class: e.class
+          log.error "Feedly: error has occoured. trying to retry after #{@run_interval} seconds.", error: e.message, error_class: e.class
           log.error_backtrace e.backtrace
           sleep @run_interval
           retry
         end
         sleep @run_interval
       end
+      log.error "Feedly: stopped fetching due to the error."
     end
 
     def fetch
+      @profile_id ||= @client.user_profile.id
+      @state_store ||= StateStore.new(@state_file)
       @subscribe_categories.each do |category_name|
         category_id = "user/#{@profile_id}/category/#{category_name}"
         fetch_time_range = get_fetch_time_range
