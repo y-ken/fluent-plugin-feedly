@@ -35,7 +35,7 @@ module Fluent
 
       @client = Feedlr::Client.new(
         oauth_access_token: @access_token,
-        sandbox: @enable_sandbox,
+        sandbox: @enable_sandbox
       )
     end
 
@@ -68,7 +68,7 @@ module Fluent
       @subscribe_categories.each do |category_name|
         category_id = "user/#{@profile_id}/category/#{category_name}"
         fetch_time_range = get_fetch_time_range
-        loop {
+        loop do
           request_option = { count: @fetch_count, continuation: get_continuation_id, newerThan: fetch_time_range }
           cursor = @client.stream_entries_contents(category_id, request_option)
           if cursor.items.nil?
@@ -81,7 +81,7 @@ module Fluent
           log.info "Feedly: fetched articles.", articles: cursor.items.size, request_option: request_option
           set_continuation_id(cursor.continuation)
           break if get_continuation_id.nil?
-        }
+        end
       end
     end
 
