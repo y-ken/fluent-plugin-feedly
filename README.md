@@ -7,7 +7,7 @@ Fluentd input plugin to fetch RSS/ATOM feed via feedly Cloud API.
 ## Dependencies
 
 * Ruby 1.9.3+
-* Fluentd 0.10.54+
+* Fluentd 0.10.55+
 
 ## Installation
 
@@ -19,6 +19,9 @@ $ gem install fluent-plugin-feedly
 
 # for td-agent
 $ sudo /usr/lib64/fluent/ruby/bin/fluent-gem install fluent-plugin-feedly
+
+# for td-agent2
+$ sudo td-agent-gem install fluent-plugin-feedly
 `````
 
 ## Configuration
