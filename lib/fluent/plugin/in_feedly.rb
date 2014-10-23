@@ -64,7 +64,7 @@ module Fluent
         end
         sleep @run_interval
       end
-      log.error "Feedly: stopped fetching due to the error."
+      log.error "Feedly: stopped fetching process due to the previous error."
     end
 
     def fetch
@@ -77,8 +77,7 @@ module Fluent
           request_option = { count: @fetch_count, continuation: get_continuation_id, newerThan: fetch_time_range }
           cursor = @client.stream_entries_contents(category_id, request_option)
           if cursor.items.nil?
-            log.error "Feedly: unexpected error has occoured.", cursor: cursor
-            break
+            return raise Feedlr::Error::ServerError, cursor
           end
           cursor.items.each do |item|
             Engine.emit(@tag, Engine.now, item)
@@ -155,3 +154,4 @@ module Fluent
     end
   end
 end
+
