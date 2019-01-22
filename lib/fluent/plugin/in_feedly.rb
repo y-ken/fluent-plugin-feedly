@@ -1,4 +1,5 @@
 # -*- encoding: utf-8 -*-
+require 'fluent/input'
 
 module Fluent
   class FeedlyInput < Fluent::Input
