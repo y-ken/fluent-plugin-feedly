@@ -1,5 +1,7 @@
 # fluent-plugin-feedly
 
+[![Test](https://github.com/y-ken/fluent-plugin-feedly/actions/workflows/ci.yml/badge.svg)](https://github.com/y-ken/fluent-plugin-feedly/actions/workflows/ci.yml)
+
 ## Overview
 
 Fluentd input plugin to fetch RSS/ATOM feed via feedly Cloud API.
