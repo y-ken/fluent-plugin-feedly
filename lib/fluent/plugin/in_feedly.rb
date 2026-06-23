@@ -1,5 +1,6 @@
 # -*- encoding: utf-8 -*-
 require 'fluent/input'
+require 'yaml'
 
 module Fluent
   class FeedlyInput < Fluent::Input
@@ -126,10 +127,20 @@ module Fluent
     class StateStore
       def initialize(path)
         @path = path
-        if File.exists?(@path)
-          @data = YAML.load_file(@path)
-          if @data == false || @data == []
+        if File.exist?(@path)
+          # The state file is written by this plugin and stores symbol-keyed
+          # hashes, so it has to be loaded with Symbol permitted. Psych 4
+          # (Ruby 3.1+) defaults to a safe loader that rejects symbols.
+          @data =
+            begin
+              YAML.load_file(@path, permitted_classes: [Symbol], aliases: true)
+            rescue ArgumentError
+              # Older Psych (Ruby < 3.1) does not accept these keywords.
+              YAML.load_file(@path)
+            end
+          if @data.nil? || @data == false || @data == []
             # this happens if an users created an empty file accidentally
+            # (an empty document loads as nil on Psych 4, false on older Psych)
             @data = {}
           elsif !@data.is_a?(Hash)
             raise "state_file on #{@path.inspect} is invalid"
